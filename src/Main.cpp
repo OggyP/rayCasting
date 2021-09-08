@@ -51,7 +51,7 @@ int main()
 	// in Windows at least, this must be called before creating the window
 	float screenScalingFactor = platform.getScreenScalingFactor(window.getSystemHandle());
 	// Use the screenScalingFactor
-	window.create(sf::VideoMode(1000.0f * screenScalingFactor, 1000.0f * screenScalingFactor), "Refraction Simulation!");
+	window.create(sf::VideoMode(1000.0f * screenScalingFactor, 1000.0f * screenScalingFactor), "Ray Cast!");
 	platform.setIcon(window.getSystemHandle());
 
 	sf::CircleShape pointDraw(4);
@@ -127,7 +127,7 @@ int main()
 		vectorDraw[0].color = sf::Color::Red;
 		vectorDraw[1].color = sf::Color::Red;
 
-		for (float angle = -M_PI; angle <= M_PI; angle += M_PI / 199)
+		for (float angle = -M_PI; angle <= M_PI; angle += M_PI / 9999)
 		{
 			double coord1[2] = { mouseCoord[0], mouseCoord[1] };
 			movementVector mv;
