@@ -127,11 +127,11 @@ int main()
 		vectorDraw[0].color = sf::Color::Red;
 		vectorDraw[1].color = sf::Color::Red;
 
-		for (float angle = -M_PI; angle <= M_PI; angle += M_PI / 180)
+		for (float angle = -M_PI; angle <= M_PI; angle += M_PI / 199)
 		{
 			double coord1[2] = { mouseCoord[0], mouseCoord[1] };
 			movementVector mv;
-			mv.setVector(angle, 2000);
+			mv.setVector(angle, 1000000);
 			mv.x += mouseCoord[0];
 			mv.y += mouseCoord[1];
 			double coord2[2] = { mv.x, mv.y };
