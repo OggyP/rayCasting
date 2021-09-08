@@ -95,7 +95,7 @@ int main()
 		mouseCoord[0] = sf::Mouse::getPosition(window).x;
 		mouseCoord[1] = sf::Mouse::getPosition(window).y;
 
-		if (mouseBtn[1] && !mouseDown)
+		if (mouseBtn[0] && !mouseDown)
 		{
 			mouseDown = true;
 			if (!saved)
@@ -117,7 +117,7 @@ int main()
 				obstacles.push_back(newLine);
 			}
 		}
-		else if (!mouseBtn[1])
+		else if (!mouseBtn[0])
 		{
 			mouseDown = false;
 		}
