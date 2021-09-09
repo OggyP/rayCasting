@@ -124,8 +124,8 @@ int main()
 
 		window.clear();
 
-		vectorDraw[0].color = sf::Color::Red;
-		vectorDraw[1].color = sf::Color::Red;
+		vectorDraw[0].color = sf::Color::White;
+		vectorDraw[1].color = sf::Color::White;
 
 		for (float angle = -M_PI; angle <= M_PI; angle += M_PI / 9999)
 		{
@@ -162,8 +162,8 @@ int main()
 			window.draw(vectorDraw);
 		}
 
-		vectorDraw[0].color = sf::Color::White;
-		vectorDraw[1].color = sf::Color::White;
+		vectorDraw[0].color = sf::Color::Blue;
+		vectorDraw[1].color = sf::Color::Blue;
 
 		for (auto currentLine : obstacles)
 		{
