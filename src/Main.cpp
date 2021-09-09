@@ -2,7 +2,6 @@
 #include "movementVector.hpp"
 #include "obstacles.hpp"
 #include <math.h>
-#include <pthread.h>
 #include <vector>
 
 using namespace std;
