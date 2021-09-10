@@ -14,6 +14,11 @@ public:
 		return magnitudeFromVector;
 	}
 
+	double getMagnitudeSqr()
+	{
+		return x * x + y * y;
+	}
+
 	double getDirection()
 	{
 		double direction = atan2(y, x);
