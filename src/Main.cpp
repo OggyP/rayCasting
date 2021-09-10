@@ -45,6 +45,7 @@ int main()
 	bool saved = false;
 	bool mouseDown = false;
 	bool drawPoint = false;
+	int currentId = 0;
 
 	sf::RenderWindow window;
 	// in Windows at least, this must be called before creating the window
@@ -108,7 +109,8 @@ int main()
 			{
 				saved = false;
 				drawPoint = false;
-				lineObj newLine;
+				lineObj newLine(currentId);
+				currentId++;
 				newLine.x1 = savedMouseCoord[0];
 				newLine.y1 = savedMouseCoord[1];
 				newLine.x2 = mouseCoord[0];
@@ -126,39 +128,47 @@ int main()
 		vectorDraw[0].color = sf::Color::White;
 		vectorDraw[1].color = sf::Color::White;
 
-		for (float angle = -M_PI; angle <= M_PI; angle += M_PI / 9999)
+		for (auto currentLine : obstacles)
 		{
-			double coord1[2] = { mouseCoord[0], mouseCoord[1] };
-			movementVector mv;
-			mv.setVector(angle, 1000000);
-			mv.x += mouseCoord[0];
-			mv.y += mouseCoord[1];
-			double coord2[2] = { mv.x, mv.y };
-			double obstaclesCollided[3] = { 1000000000000, 0, 0 };
-			for (auto currentLine : obstacles)
+			for (int pointNum = 1; pointNum < 3; pointNum++)
 			{
-				float intersectionX = getIntersection(currentLine.x1, currentLine.y1, currentLine.x2, currentLine.y2, coord1[0], coord1[1], coord2[0], coord2[1]);
-
-				if (((intersectionX < currentLine.x2 && intersectionX > currentLine.x1) || (intersectionX > currentLine.x2 && intersectionX < currentLine.x1)) && ((mv.x > coord1[0] && intersectionX > coord1[0]) || (mv.x < coord1[0] && intersectionX < coord1[0])))
+				double coord1[2] = { mouseCoord[0], mouseCoord[1] };
+				movementVector mv;
+				double coord2[2] = { mv.x, mv.y };
+				double obstaclesCollided[3] = { 1000000000000, 0, 0 };
+				mv.x = currentLine.getX(pointNum) - mouseCoord[0];
+				mv.y = currentLine.getY(pointNum) - mouseCoord[1];
+				mv.setVector(mv.getDirection(), 1000000);
+				coord2[0] = mv.x;
+				coord2[1] = mv.y;
+				for (auto checkLine : obstacles)
 				{
-					float intersectionY = getYFromX(intersectionX, currentLine.x1, currentLine.y1, currentLine.x2, currentLine.y2);
-					float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
-					if (distance < obstaclesCollided[0])
+					if (checkLine.id != currentLine.id)
 					{
-						obstaclesCollided[0] = distance;
-						obstaclesCollided[1] = intersectionX;
-						obstaclesCollided[2] = intersectionY;
+						float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, coord1[0], coord1[1], coord2[0], coord2[1]);
+
+						if (((intersectionX < checkLine.x2 && intersectionX > checkLine.x1) || (intersectionX > checkLine.x2 && intersectionX < checkLine.x1)) && ((mv.x > coord1[0] && intersectionX > coord1[0]) || (mv.x < coord1[0] && intersectionX < coord1[0])))
+						{
+							float intersectionY = getYFromX(intersectionX, checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2);
+							float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
+							if (distance < obstaclesCollided[0])
+							{
+								obstaclesCollided[0] = distance;
+								obstaclesCollided[1] = intersectionX;
+								obstaclesCollided[2] = intersectionY;
+							}
+						}
 					}
 				}
+				if (obstaclesCollided[0] < 1000000000000)
+				{
+					coord2[0] = obstaclesCollided[1];
+					coord2[1] = obstaclesCollided[2];
+				}
+				vectorDraw[0].position = sf::Vector2f(coord1[0], coord1[1]);
+				vectorDraw[1].position = sf::Vector2f(coord2[0], coord2[1]);
+				window.draw(vectorDraw);
 			}
-			if (obstaclesCollided[0] < 1000000000000)
-			{
-				coord2[0] = obstaclesCollided[1];
-				coord2[1] = obstaclesCollided[2];
-			}
-			vectorDraw[0].position = sf::Vector2f(coord1[0], coord1[1]);
-			vectorDraw[1].position = sf::Vector2f(coord2[0], coord2[1]);
-			window.draw(vectorDraw);
 		}
 
 		vectorDraw[0].color = sf::Color::Blue;
