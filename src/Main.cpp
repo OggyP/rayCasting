@@ -19,12 +19,10 @@ float getIntersection(float Ax1, float Ay1, float Ax2, float Ay2, float Bx1, flo
 
 	if (!denominatorM1)
 	{
-		cout << "IntXAx1: " << Ax1 << "\n";
 		return Ax1;
 	}
 	if (!denominatorM2)
 	{
-		cout << "IntXBx1: " << Bx1 << "\n";
 		return Bx1;
 	}
 
@@ -66,7 +64,7 @@ int main()
 	bool saved = false;
 	bool mouseDown = false;
 	bool drawPoint = false;
-	int currentId = 0;
+	int currentId = 1;
 
 	sf::RenderWindow window;
 	// in Windows at least, this must be called before creating the window
@@ -79,6 +77,9 @@ int main()
 	pointDraw.setFillColor(sf::Color::Blue);
 
 	sf::VertexArray triangle(sf::Triangles, 3);
+	triangle[0].color = sf::Color::Red;
+	triangle[1].color = sf::Color::Blue;
+	triangle[2].color = sf::Color::Green;
 
 	// Limit the framerate to 60 frames per second (this step is optional)
 	window.setFramerateLimit(60);
@@ -158,37 +159,10 @@ int main()
 			for (int pointNum = 1; pointNum < 3; pointNum++)
 			{
 				movementVector mv;
-				// double obstaclesCollided[3] = { 1000000000000, 0, 0 };
 				mv.x = currentLine.getX(pointNum) - mouseCoord[0];
 				mv.y = currentLine.getY(pointNum) - mouseCoord[1];
+				mv.id = currentLine.id;
 				points.push_back(mv);
-				// for (auto checkLine : obstacles)
-				// {
-				// 	if (checkLine.id != currentLine.id)
-				// 	{
-				// 		float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, coord1[0], coord1[1], coord2[0], coord2[1]);
-
-				// 		if (((intersectionX < checkLine.x2 && intersectionX > checkLine.x1) || (intersectionX > checkLine.x2 && intersectionX < checkLine.x1)) && ((mv.x > coord1[0] && intersectionX > coord1[0]) || (mv.x < coord1[0] && intersectionX < coord1[0])))
-				// 		{
-				// 			float intersectionY = getYFromX(intersectionX, checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2);
-				// 			float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
-				// 			if (distance < obstaclesCollided[0])
-				// 			{
-				// 				obstaclesCollided[0] = distance;
-				// 				obstaclesCollided[1] = intersectionX;
-				// 				obstaclesCollided[2] = intersectionY;
-				// 			}
-				// 		}
-				// 	}
-				// }
-				// if (obstaclesCollided[0] < 1000000000000)
-				// {
-				// 	coord2[0] = obstaclesCollided[1];
-				// 	coord2[1] = obstaclesCollided[2];
-				// }
-				// vectorDraw[0].position = sf::Vector2f(coord1[0], coord1[1]);
-				// vectorDraw[1].position = sf::Vector2f(coord2[0], coord2[1]);
-				// window.draw(vectorDraw);
 			}
 		}
 
@@ -210,10 +184,54 @@ int main()
 
 		sort(points.begin(), points.end(), sortByAngle);
 
+		sf::Vector2f previousPoint;
+		sf::Vector2f firstPoint;
+
 		for (int i = 0; i < m; i++)
 		{
+			movementVector pointExt = points[i];
+			double originalMagSqr = pointExt.getMagnitudeSqr();
+			pointExt.setVector(pointExt.getDirection(), 100000000);
+			double obstaclesCollidedExt[3] = { 100000000, 0, 0 };
+			double finalCoordExt[2] = { pointExt.x + mouseCoord[0], pointExt.y + mouseCoord[1] };
+			for (auto checkLine : obstacles)
+			{
+				float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, mouseCoord[0], mouseCoord[1], finalCoordExt[0], finalCoordExt[1]);
+				float intersectionY = getYFromX(intersectionX, checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2);
+				if (((intersectionX < checkLine.x2 && intersectionX > checkLine.x1) || (intersectionX > checkLine.x2 && intersectionX < checkLine.x1))
+					&& (((finalCoordExt[0] > mouseCoord[0] && intersectionX > mouseCoord[0]) || (finalCoordExt[0] < mouseCoord[0] && intersectionX < mouseCoord[0]))
+						|| ((finalCoordExt[1] > mouseCoord[1] && intersectionY > mouseCoord[1]) || (finalCoordExt[1] < mouseCoord[1] && intersectionY < mouseCoord[1]))))
+				{
+					float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
+					cout << checkLine.id << "\n";
+					if (distance < obstaclesCollidedExt[0] && checkLine.id != pointExt.id)
+					{
+						obstaclesCollidedExt[0] = distance;
+						obstaclesCollidedExt[1] = intersectionX;
+						obstaclesCollidedExt[2] = intersectionY;
+					}
+				}
+			}
+			if (obstaclesCollidedExt[0] < 100000000)
+			{
+				finalCoordExt[0] = obstaclesCollidedExt[1];
+				finalCoordExt[1] = obstaclesCollidedExt[2];
+			}
+
+			if (i != 0)
+			{
+				triangle[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
+				triangle[1].position = sf::Vector2f(finalCoordExt[0], finalCoordExt[1]);
+				triangle[2].position = previousPoint;
+				window.draw(triangle);
+			}
+			else
+			{
+				firstPoint = sf::Vector2f(finalCoordExt[0], finalCoordExt[1]);
+			}
+			previousPoint = sf::Vector2f(finalCoordExt[0], finalCoordExt[1]);
+
 			movementVector point = points[i];
-			double originalMagSqr = point.getMagnitudeSqr();
 			double obstaclesCollided[3] = { originalMagSqr, 0, 0 };
 			double finalCoord[2] = { point.x + mouseCoord[0], point.y + mouseCoord[1] };
 			for (auto checkLine : obstacles)
@@ -238,10 +256,21 @@ int main()
 				finalCoord[0] = obstaclesCollided[1];
 				finalCoord[1] = obstaclesCollided[2];
 			}
-			vectorDraw[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
-			vectorDraw[1].position = sf::Vector2f(finalCoord[0], finalCoord[1]);
-			window.draw(vectorDraw);
+			if (i != 0)
+			{
+				triangle[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
+				triangle[1].position = sf::Vector2f(finalCoord[0], finalCoord[1]);
+				triangle[2].position = previousPoint;
+				window.draw(triangle);
+			}
+			previousPoint = sf::Vector2f(finalCoord[0], finalCoord[1]);
 		}
+
+		//draw last triangles
+		triangle[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
+		triangle[1].position = firstPoint;
+		triangle[2].position = previousPoint;
+		window.draw(triangle);
 
 		vectorDraw[0].color = sf::Color::Blue;
 		vectorDraw[1].color = sf::Color::Blue;
