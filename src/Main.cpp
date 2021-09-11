@@ -42,10 +42,24 @@ float getYFromX(float xVal, float Ax1, float Ay1, float Ax2, float Ay2)
 	return yIntersection;
 }
 
-bool sortByAngle(movementVector& v1, movementVector& v2);
-bool sortByAngle(movementVector& v1, movementVector& v2)
+bool sortPoints(plotPoint& v1, plotPoint& v2);
+bool sortPoints(plotPoint& v1, plotPoint& v2)
 {
-	return v1.getDirection() < v2.getDirection();
+	if (v1.initAngle == v2.initAngle)
+	{
+		if (v1.drawFirst)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+	else
+	{
+		return v1.initAngle < v2.initAngle;
+	}
 }
 
 int main()
@@ -152,88 +166,14 @@ int main()
 		vectorDraw[0].color = sf::Color::White;
 		vectorDraw[1].color = sf::Color::White;
 
-		vector<movementVector> points;
+		vector<plotPoint> points;
 
-		for (auto currentLine : obstacles)
+		for (double angle = -M_PI; angle < M_PI; angle += M_PI / 2)
 		{
-			for (int pointNum = 1; pointNum < 3; pointNum++)
-			{
-				movementVector mv;
-				mv.x = currentLine.getX(pointNum) - mouseCoord[0];
-				mv.y = currentLine.getY(pointNum) - mouseCoord[1];
-				mv.id = currentLine.id;
-				points.push_back(mv);
-			}
-		}
-
-		double direction = 10000000000;
-
-		for (int parses = 0; parses < 2; parses++)
-		{
-			movementVector newMv1;
-			newMv1.x = direction;
-			newMv1.y = 0;
-			points.push_back(newMv1);
-			newMv1.y = direction;
-			newMv1.x = 0;
-			points.push_back(newMv1);
-			direction = -10000000000;
-		}
-
-		int m = points.size();
-
-		sort(points.begin(), points.end(), sortByAngle);
-
-		sf::Vector2f previousPoint;
-		sf::Vector2f firstPoint;
-
-		for (int i = 0; i < m; i++)
-		{
-			movementVector pointExt = points[i];
-			double originalMagSqr = pointExt.getMagnitudeSqr();
-			pointExt.setVector(pointExt.getDirection(), 100000000);
-			double obstaclesCollidedExt[3] = { 100000000, 0, 0 };
-			double finalCoordExt[2] = { pointExt.x + mouseCoord[0], pointExt.y + mouseCoord[1] };
-			for (auto checkLine : obstacles)
-			{
-				float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, mouseCoord[0], mouseCoord[1], finalCoordExt[0], finalCoordExt[1]);
-				float intersectionY = getYFromX(intersectionX, checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2);
-				if (((intersectionX < checkLine.x2 && intersectionX > checkLine.x1) || (intersectionX > checkLine.x2 && intersectionX < checkLine.x1))
-					&& (((finalCoordExt[0] > mouseCoord[0] && intersectionX > mouseCoord[0]) || (finalCoordExt[0] < mouseCoord[0] && intersectionX < mouseCoord[0]))
-						|| ((finalCoordExt[1] > mouseCoord[1] && intersectionY > mouseCoord[1]) || (finalCoordExt[1] < mouseCoord[1] && intersectionY < mouseCoord[1]))))
-				{
-					float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
-					cout << checkLine.id << "\n";
-					if (distance < obstaclesCollidedExt[0] && checkLine.id != pointExt.id)
-					{
-						obstaclesCollidedExt[0] = distance;
-						obstaclesCollidedExt[1] = intersectionX;
-						obstaclesCollidedExt[2] = intersectionY;
-					}
-				}
-			}
-			if (obstaclesCollidedExt[0] < 100000000)
-			{
-				finalCoordExt[0] = obstaclesCollidedExt[1];
-				finalCoordExt[1] = obstaclesCollidedExt[2];
-			}
-
-			if (i != 0)
-			{
-				triangle[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
-				triangle[1].position = sf::Vector2f(finalCoordExt[0], finalCoordExt[1]);
-				triangle[2].position = previousPoint;
-				window.draw(triangle);
-			}
-			else
-			{
-				firstPoint = sf::Vector2f(finalCoordExt[0], finalCoordExt[1]);
-			}
-			previousPoint = sf::Vector2f(finalCoordExt[0], finalCoordExt[1]);
-
-			movementVector point = points[i];
-			double obstaclesCollided[3] = { originalMagSqr, 0, 0 };
-			double finalCoord[2] = { point.x + mouseCoord[0], point.y + mouseCoord[1] };
+			movementVector newMv;
+			newMv.setVector(angle, 100000000);
+			double obstaclesCollided[3] = { 100000000, 0, 0 };
+			double finalCoord[2] = { newMv.x + mouseCoord[0], newMv.y + mouseCoord[1] };
 			for (auto checkLine : obstacles)
 			{
 				float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, mouseCoord[0], mouseCoord[1], finalCoord[0], finalCoord[1]);
@@ -251,26 +191,131 @@ int main()
 					}
 				}
 			}
-			if (obstaclesCollided[0] < originalMagSqr)
+			if (obstaclesCollided[0] < 100000000)
 			{
 				finalCoord[0] = obstaclesCollided[1];
 				finalCoord[1] = obstaclesCollided[2];
 			}
-			if (i != 0)
-			{
-				triangle[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
-				triangle[1].position = sf::Vector2f(finalCoord[0], finalCoord[1]);
-				triangle[2].position = previousPoint;
-				window.draw(triangle);
-			}
-			previousPoint = sf::Vector2f(finalCoord[0], finalCoord[1]);
+			plotPoint plotPoint(finalCoord[0], finalCoord[1], angle);
+			points.push_back(plotPoint);
 		}
 
-		//draw last triangles
-		triangle[0].position = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
-		triangle[1].position = firstPoint;
-		triangle[2].position = previousPoint;
-		window.draw(triangle);
+		for (auto currentLine : obstacles)
+		{
+			int firstPointToShow;
+			movementVector firstPoint;
+			firstPoint.x = currentLine.x1 - mouseCoord[0];
+			firstPoint.y = currentLine.y1 - mouseCoord[1];
+			movementVector secondPoint;
+			secondPoint.x = currentLine.x2 - mouseCoord[0];
+			secondPoint.y = currentLine.y2 - mouseCoord[1];
+			if (firstPoint.getDirection() < secondPoint.getDirection())
+			{
+				firstPointToShow = 1;
+			}
+			else
+			{
+				firstPointToShow = 2;
+			}
+			for (int pointNum = 1; pointNum < 3; pointNum++)
+			{
+				movementVector mv;
+				mv.x = currentLine.getX(pointNum) - mouseCoord[0];
+				mv.y = currentLine.getY(pointNum) - mouseCoord[1];
+
+				double initialAngle = mv.getDirection();
+				double originalMagSqr = mv.getMagnitudeSqr();
+
+				movementVector pointExt;
+				pointExt.setVector(mv.getDirection(), 100000000);
+				double obstaclesCollidedExt[3] = { 100000000, 0, 0 };
+				double finalCoordExt[2] = { pointExt.x + mouseCoord[0], pointExt.y + mouseCoord[1] };
+				for (auto checkLine : obstacles)
+				{
+					float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, mouseCoord[0], mouseCoord[1], finalCoordExt[0], finalCoordExt[1]);
+					float intersectionY = getYFromX(intersectionX, checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2);
+					if (((intersectionX < checkLine.x2 && intersectionX > checkLine.x1) || (intersectionX > checkLine.x2 && intersectionX < checkLine.x1))
+						&& (((finalCoordExt[0] > mouseCoord[0] && intersectionX > mouseCoord[0]) || (finalCoordExt[0] < mouseCoord[0] && intersectionX < mouseCoord[0]))
+							|| ((finalCoordExt[1] > mouseCoord[1] && intersectionY > mouseCoord[1]) || (finalCoordExt[1] < mouseCoord[1] && intersectionY < mouseCoord[1]))))
+					{
+						float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
+						if (distance < obstaclesCollidedExt[0] && checkLine.id != currentLine.id)
+						{
+							obstaclesCollidedExt[0] = distance;
+							obstaclesCollidedExt[1] = intersectionX;
+							obstaclesCollidedExt[2] = intersectionY;
+						}
+					}
+				}
+				if (obstaclesCollidedExt[0] < 100000000)
+				{
+					finalCoordExt[0] = obstaclesCollidedExt[1];
+					finalCoordExt[1] = obstaclesCollidedExt[2];
+				}
+				plotPoint plotPointExt(finalCoordExt[0], finalCoordExt[1], initialAngle);
+				points.push_back(plotPointExt);
+
+				double obstaclesCollided[3] = { originalMagSqr, 0, 0 };
+				double finalCoord[2] = { mv.x + mouseCoord[0], mv.y + mouseCoord[1] };
+				for (auto checkLine : obstacles)
+				{
+					float intersectionX = getIntersection(checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2, mouseCoord[0], mouseCoord[1], finalCoord[0], finalCoord[1]);
+					float intersectionY = getYFromX(intersectionX, checkLine.x1, checkLine.y1, checkLine.x2, checkLine.y2);
+					if (((intersectionX < checkLine.x2 && intersectionX > checkLine.x1) || (intersectionX > checkLine.x2 && intersectionX < checkLine.x1))
+						&& (((finalCoord[0] > mouseCoord[0] && intersectionX > mouseCoord[0]) || (finalCoord[0] < mouseCoord[0] && intersectionX < mouseCoord[0]))
+							|| ((finalCoord[1] > mouseCoord[1] && intersectionY > mouseCoord[1]) || (finalCoord[1] < mouseCoord[1] && intersectionY < mouseCoord[1]))))
+					{
+						float distance = (mouseCoord[0] - intersectionX) * (mouseCoord[0] - intersectionX) + (mouseCoord[1] - intersectionY) * (mouseCoord[1] - intersectionY);
+						if (distance < obstaclesCollided[0])
+						{
+							obstaclesCollided[0] = distance;
+							obstaclesCollided[1] = intersectionX;
+							obstaclesCollided[2] = intersectionY;
+						}
+					}
+				}
+				if (obstaclesCollided[0] < originalMagSqr)
+				{
+					finalCoord[0] = obstaclesCollided[1];
+					finalCoord[1] = obstaclesCollided[2];
+				}
+				plotPoint plotPoint(finalCoord[0], finalCoord[1], initialAngle);
+				if (firstPointToShow == pointNum)
+					plotPoint.drawFirst = true;
+				points.push_back(plotPoint);
+			}
+		}
+
+		int m = points.size();
+
+		sort(points.begin(), points.end(), sortPoints);
+
+		sf::Vector2f previousPoint;
+		sf::Vector2f mousePos = sf::Vector2f(mouseCoord[0], mouseCoord[1]);
+
+		for (int i = 0; i <= m; i++)
+		{
+			if (i == m)
+			{
+				plotPoint point = points[0];
+				sf::Vector2f NewPos = sf::Vector2f(point.x, point.y);
+				cout << point.y << "\n";
+				triangle[0].position = mousePos;
+				triangle[1].position = previousPoint;
+				triangle[2].position = NewPos;
+				window.draw(triangle);
+			}
+			else
+			{
+				plotPoint point = points[i];
+				sf::Vector2f NewPos = sf::Vector2f(point.x, point.y);
+				triangle[0].position = mousePos;
+				triangle[1].position = previousPoint;
+				triangle[2].position = NewPos;
+				window.draw(triangle);
+				previousPoint = NewPos;
+			}
+		}
 
 		vectorDraw[0].color = sf::Color::Blue;
 		vectorDraw[1].color = sf::Color::Blue;

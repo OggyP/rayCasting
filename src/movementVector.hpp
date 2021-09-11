@@ -10,6 +10,8 @@ public:
 
 	int id = 0;
 
+	double initAngle = 0;
+
 	double getMagnitude()
 	{
 		const double magnitudeFromVector = sqrt(pow(x, 2) + pow(y, 2));
@@ -31,5 +33,25 @@ public:
 	{
 		x = magnitude * cos(direction);
 		y = magnitude * sin(direction);
+	}
+};
+
+class plotPoint
+{
+public:
+	double initAngle;
+	double x;
+	double y;
+	bool drawFirst = false;
+
+	plotPoint(double newX, double newY, double newInitAngle)
+	{
+		x = newX;
+		y = newY;
+		initAngle = newInitAngle;
+	}
+	double getMagnitudeSqr()
+	{
+		return x * x + y * y;
 	}
 };
